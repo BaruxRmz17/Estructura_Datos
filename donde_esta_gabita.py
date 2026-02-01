@@ -16,7 +16,7 @@ def leer_pasos(n, ruta):
     """Lee n pares de coordenadas de forma recursiva y los agrega a la ruta."""
     if n == 0:
         return
-    fila, col = map(int, input().split())
+    fila, col = map(int, input(f"Ingresa las coordenadas del paso {len(ruta) + 1} (fila col): ").split())
     ruta.append((fila, col))
     leer_pasos(n - 1, ruta)
 
@@ -59,17 +59,21 @@ def marcar_ruta(copia, ruta, i):
 # ---------- Bucle principal de comandos (recursivo) ----------
 def procesar_comandos(matriz, ruta):
     """Lee comandos C / I / F de forma recursiva."""
-    comando = input().strip()
+    comando = input("\nIngresa un comando (C=agregar paso, I=imprimir, F=finalizar): ").strip()
 
     if comando == "F":
+        print("¡Programa finalizado!")
         return                          # caso base → termina
 
     if comando == "C":
-        fila, col = map(int, input().split())
+        fila, col = map(int, input("Ingresa las coordenadas del nuevo paso (fila col): ").split())
         ruta.append((fila, col))        # agregar paso extra
+        print(f"Paso agregado en ({fila}, {col})")
 
     elif comando == "I":
+        print("\n--- Estado actual de Gabita ---")
         imprimir_matriz(matriz, ruta)   # imprimir estado actual
+        print("--- Fin del estado ---")
 
     # Caso recursivo → seguir leyendo el siguiente comando
     procesar_comandos(matriz, ruta)
@@ -79,20 +83,34 @@ def procesar_comandos(matriz, ruta):
 # MAIN
 # ============================================================
 def main():
+    print("=" * 50)
+    print("    ¿DÓNDE ESTÁ GABITA? - Rastreador de Coneja")
+    print("=" * 50)
+    
     # 1) Leer dimensiones de la matriz
-    m, n = map(int, input().split())
+    print("\nConfiguración inicial:")
+    m, n = map(int, input("Ingresa las dimensiones de la matriz (filas columnas): ").split())
+    print(f"Matriz de {m}x{n} creada exitosamente.")
 
     # 2) Crear matriz vacía
     matriz = crear_matriz(m, n)
 
     # 3) Leer cantidad de pasos iniciales
-    N = int(input())
+    N = int(input(f"\nIngresa la cantidad de pasos iniciales de Gabita: "))
+    print(f"Se leerán {N} coordenadas iniciales.")
 
     # 4) Leer los N pasos iniciales (recursivo)
     ruta = []
+    print("\n--- Ingreso de pasos iniciales ---")
     leer_pasos(N, ruta)
+    print(f"Pasos iniciales registrados: {ruta}")
 
     # 5) Entrar al bucle de comandos (recursivo)
+    print("\n--- Modo interactivo iniciado ---")
+    print("Comandos disponibles:")
+    print("  C - Agregar un paso extra")
+    print("  I - Mostrar posición actual de Gabita")
+    print("  F - Finalizar programa")
     procesar_comandos(matriz, ruta)
 
 
