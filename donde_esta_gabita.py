@@ -12,13 +12,49 @@ def crear_matriz(m, n):
 
 
 # ---------- Leer los N pasos iniciales (recursiva) ----------
-def leer_pasos(n, ruta):
+def leer_pasos(n, ruta, contador):
     """Lee n pares de coordenadas de forma recursiva y los agrega a la ruta."""
     if n == 0:
         return
-    fila, col = map(int, input(f"Ingresa las coordenadas del paso {len(ruta) + 1} (fila col): ").split())
+    
+    # Leer coordenadas de forma simple
+    print("Ingresa las coordenadas del paso", contador, "(fila col): ")
+    entrada = input()
+    
+    # Separar la entrada manualmente
+    partes = entrada.split()
+    fila = int(partes[0])
+    col = int(partes[1])
+    
     ruta.append((fila, col))
-    leer_pasos(n - 1, ruta)
+    leer_pasos(n - 1, ruta, contador + 1)
+
+
+# ---------- Imprimir una fila (recursivo) ----------
+def imprimir_fila(fila, indice):
+    """Imprime los elementos de una fila recursivamente."""
+    if indice >= len(fila):
+        print()  # salto de línea al terminar la fila
+        return
+    
+    # Imprimir el elemento actual
+    print(fila[indice], end=" ")
+    
+    # Imprimir el siguiente elemento
+    imprimir_fila(fila, indice + 1)
+
+
+# ---------- Imprimir todas las filas (recursivo) ----------
+def imprimir_todas_filas(matriz, indice_fila):
+    """Imprime todas las filas de la matriz recursivamente."""
+    if indice_fila >= len(matriz):
+        return
+    
+    # Imprimir la fila actual
+    imprimir_fila(matriz[indice_fila], 0)
+    
+    # Imprimir la siguiente fila
+    imprimir_todas_filas(matriz, indice_fila + 1)
 
 
 # ---------- Imprimir la matriz con la ruta ----------
@@ -36,9 +72,8 @@ def imprimir_matriz(matriz, ruta):
     # Marcar la ruta (recursiva)
     marcar_ruta(copia, ruta, 0)
 
-    # Imprimir cada fila
-    for fila in copia:
-        print(" ".join(str(x) for x in fila))
+    # Imprimir todas las filas recursivamente
+    imprimir_todas_filas(copia, 0)
 
 
 def marcar_ruta(copia, ruta, i):
@@ -48,30 +83,44 @@ def marcar_ruta(copia, ruta, i):
     """
     if i >= len(ruta):
         return
-    fila, col = ruta[i]
+    
+    fila = ruta[i][0]
+    col = ruta[i][1]
+    
     if i == len(ruta) - 1:
         copia[fila][col] = "G"   # posición actual
     else:
         copia[fila][col] = "*"   # ruta previa
+    
     marcar_ruta(copia, ruta, i + 1)
 
 
 # ---------- Bucle principal de comandos (recursivo) ----------
 def procesar_comandos(matriz, ruta):
     """Lee comandos C / I / F de forma recursiva."""
-    comando = input("\nIngresa un comando (C=agregar paso, I=imprimir, F=finalizar): ").strip()
+    print()
+    print("Ingresa un comando (C=agregar paso, I=imprimir, F=finalizar): ")
+    comando = input()
 
     if comando == "F":
         print("¡Programa finalizado!")
         return                          # caso base → termina
 
     if comando == "C":
-        fila, col = map(int, input("Ingresa las coordenadas del nuevo paso (fila col): ").split())
+        print("Ingresa las coordenadas del nuevo paso (fila col): ")
+        entrada = input()
+        
+        # Separar la entrada manualmente
+        partes = entrada.split()
+        fila = int(partes[0])
+        col = int(partes[1])
+        
         ruta.append((fila, col))        # agregar paso extra
-        print(f"Paso agregado en ({fila}, {col})")
+        print("Paso agregado en (", fila, ",", col, ")")
 
     elif comando == "I":
-        print("\n--- Estado actual de Gabita ---")
+        print()
+        print("--- Estado actual de Gabita ---")
         imprimir_matriz(matriz, ruta)   # imprimir estado actual
         print("--- Fin del estado ---")
 
@@ -88,25 +137,37 @@ def main():
     print("=" * 50)
     
     # 1) Leer dimensiones de la matriz
-    print("\nConfiguración inicial:")
-    m, n = map(int, input("Ingresa las dimensiones de la matriz (filas columnas): ").split())
-    print(f"Matriz de {m}x{n} creada exitosamente.")
+    print()
+    print("Configuración inicial:")
+    print("Ingresa las dimensiones de la matriz (filas columnas): ")
+    entrada = input()
+    
+    # Separar la entrada manualmente
+    partes = entrada.split()
+    m = int(partes[0])
+    n = int(partes[1])
+    
+    print("Matriz de", m, "x", n, "creada exitosamente.")
 
     # 2) Crear matriz vacía
     matriz = crear_matriz(m, n)
 
     # 3) Leer cantidad de pasos iniciales
-    N = int(input(f"\nIngresa la cantidad de pasos iniciales de Gabita: "))
-    print(f"Se leerán {N} coordenadas iniciales.")
+    print()
+    print("Ingresa la cantidad de pasos iniciales de Gabita: ")
+    N = int(input())
+    print("Se leerán", N, "coordenadas iniciales.")
 
     # 4) Leer los N pasos iniciales (recursivo)
     ruta = []
-    print("\n--- Ingreso de pasos iniciales ---")
-    leer_pasos(N, ruta)
-    print(f"Pasos iniciales registrados: {ruta}")
+    print()
+    print("--- Ingreso de pasos iniciales ---")
+    leer_pasos(N, ruta, 1)
+    print("Pasos iniciales registrados:", ruta)
 
     # 5) Entrar al bucle de comandos (recursivo)
-    print("\n--- Modo interactivo iniciado ---")
+    print()
+    print("--- Modo interactivo iniciado ---")
     print("Comandos disponibles:")
     print("  C - Agregar un paso extra")
     print("  I - Mostrar posición actual de Gabita")
