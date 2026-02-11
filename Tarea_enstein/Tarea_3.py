@@ -5,7 +5,6 @@ import time
 # ============= PARTE 1: LECTURA Y ESTRUCTURA DE DATOS =============
 
 def readImgPGM(path):
-    """Lee una imagen PGM y retorna la matriz de intensidades"""
     img = Image.open(path)
     img_array = np.array(img)
     
@@ -17,13 +16,11 @@ def readImgPGM(path):
     return img_array
 
 def matriz_a_arreglo(matriz):
-    """Convierte matriz 2D a arreglo 1D"""
     return matriz.flatten()
 
 # ============= PARTE 2: ORDENAMIENTO =============
 
 def bubble_sort(arr, tiempo_limite=900):
-    """Bubble Sort con límite de tiempo (15 min = 900 seg)"""
     arr = arr.copy()
     n = len(arr)
     comparaciones = 0
@@ -41,7 +38,6 @@ def bubble_sort(arr, tiempo_limite=900):
     return arr, comparaciones, True
 
 def merge_sort(arr):
-    """Merge Sort - retorna arreglo ordenado y número de comparaciones"""
     comparaciones = [0]
     
     def merge(left, right):
@@ -71,7 +67,6 @@ def merge_sort(arr):
     return arr_sorted, comparaciones[0]
 
 def calcular_estadisticas(arr_ordenado):
-    """Calcula mínimo, máximo y mediana"""
     minimo = arr_ordenado[0]
     maximo = arr_ordenado[-1]
     n = len(arr_ordenado)
@@ -83,18 +78,15 @@ def calcular_estadisticas(arr_ordenado):
     return minimo, maximo, mediana
 
 def calcular_moda(arr):
-    """Calcula la moda del arreglo"""
     unique, counts = np.unique(arr, return_counts=True)
     moda = unique[np.argmax(counts)]
     return moda
 
 def aplicar_moda_a_imagen(matriz, moda):
-    """Aplica umbral de moda: valores >= moda = 255, < moda = 0"""
     resultado = np.where(matriz > moda, 255, 0)
     return resultado
 
 def guardar_imagen(img_array, nombre_archivo):
-    """Guarda la imagen modificada en formato PGM"""
     img = Image.fromarray(img_array.astype('uint8'), 'L')
     img.save(nombre_archivo)
     print(f"Imagen guardada como: {nombre_archivo}\n")
@@ -102,7 +94,6 @@ def guardar_imagen(img_array, nombre_archivo):
 # ============= PARTE 3: BÚSQUEDA =============
 
 def busqueda_lineal(matriz, valor):
-    """Búsqueda lineal en matriz 2D - retorna primera ocurrencia y conteo"""
     filas, columnas = matriz.shape
     contador = 0
     primera_posicion = None
@@ -117,7 +108,6 @@ def busqueda_lineal(matriz, valor):
     return primera_posicion, contador
 
 def busqueda_binaria(arr_ordenado, valor):
-    """Búsqueda binaria en arreglo ordenado"""
     izq, der = 0, len(arr_ordenado) - 1
     
     while izq <= der:
