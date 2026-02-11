@@ -422,75 +422,7 @@ def main():
     print("PROGRAMA FINALIZADO")
     print("="*70)
 
-# ================== ANÁLISIS CONCEPTUAL (PARTE 4) ==================
-"""
-PARTE 4: ANÁLISIS CONCEPTUAL
 
-1. ¿Por qué la búsqueda binaria no puede aplicarse directamente a la matriz
-original de la imagen?
-
-La búsqueda binaria requiere que los datos estén ORDENADOS. En la matriz
-original de la imagen, los valores representan intensidades de píxeles en
-su posición espacial (fila, columna), y estos valores NO están ordenados.
-Los píxeles vecinos pueden tener valores muy diferentes. Por ejemplo:
-- Píxel (0,0) podría tener intensidad 44
-- Píxel (0,1) podría tener intensidad 44
-- Píxel (0,2) podría tener intensidad 43
-
-La búsqueda binaria divide el espacio de búsqueda a la mitad en cada paso,
-comparando con el elemento del medio. Esto solo funciona si sabemos que
-los valores menores están a la izquierda y los mayores a la derecha, lo
-cual NO es cierto en una matriz de imagen donde el orden es espacial,
-no numérico.
-
-2. ¿Qué ventajas ofrece ordenar las intensidades antes de realizar búsquedas?
-
-Ventajas principales:
-
-a) EFICIENCIA: La búsqueda binaria tiene complejidad O(log n), mucho más
-    rápida que la búsqueda lineal O(n). Para una imagen de 1,440,000 píxeles:
-    - Búsqueda lineal: hasta 1,440,000 comparaciones
-    - Búsqueda binaria: aproximadamente 21 comparaciones
-
-b) ESTADÍSTICAS INMEDIATAS: Con datos ordenados podemos obtener:
-    - Mínimo: primer elemento
-    - Máximo: último elemento
-    - Mediana: elemento del medio
-    Todas estas operaciones son O(1) en vez de O(n)
-
-c) ANÁLISIS DE DISTRIBUCIÓN: Un arreglo ordenado facilita encontrar rangos,
-    percentiles, y analizar la distribución de intensidades.
-
-d) OPTIMIZACIÓN DE BÚSQUEDAS REPETIDAS: Si necesitamos buscar múltiples
-    valores, el costo de ordenar una vez (O(n log n)) se amortiza sobre
-    múltiples búsquedas binarias rápidas.
-
-3. ¿En qué situaciones la búsqueda lineal sigue siendo una opción adecuada?
-
-La búsqueda lineal es adecuada cuando:
-
-a) BÚSQUEDA POR POSICIÓN: Cuando necesitamos las coordenadas (fila, columna)
-    exactas donde aparece un valor, como en esta tarea. La búsqueda binaria
-    solo nos dice SI existe, pero no DÓNDE está en la imagen original.
-
-b) DATOS PEQUEÑOS: Para conjuntos muy pequeños (< 100 elementos), la
-    diferencia de rendimiento es insignificante y la búsqueda lineal es
-    más simple de implementar.
-
-c) DATOS NO ORDENADOS: Cuando ordenar los datos es costoso o imposible,
-    y solo necesitamos hacer una búsqueda ocasional.
-
-d) BÚSQUEDA DEL PRIMER ELEMENTO: Si sabemos que el elemento buscado está
-    probablemente al inicio de los datos, la búsqueda lineal puede ser más
-    rápida que ordenar primero.
-
-e) CRITERIOS COMPLEJOS: Cuando buscamos con criterios que no son simples
-    comparaciones de igualdad (ej: "pixeles con intensidad entre 40 y 50
-    Y en la región superior izquierda").
-
-f) DATOS DINÁMICOS: Si los datos cambian frecuentemente, mantener el orden
-    puede ser más costoso que hacer búsquedas lineales.
-"""
 
 if __name__ == "__main__":
     main()
