@@ -16,6 +16,9 @@
 stack.append(10)
 stack.append(20)
 
+
+
+
 #Pop -> es sacar el ultimo elemento que esta
 stacck.pop() """
 
