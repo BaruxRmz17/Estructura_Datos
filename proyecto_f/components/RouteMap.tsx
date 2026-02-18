@@ -1,10 +1,20 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { Map, type MapRef } from "@/components/ui/map";
+import { useEffect, useRef } from "react";
+import {
+  Map,
+  MapMarker,
+  MarkerContent,
+  MapControls,
+  useMap,
+  type MapRef,
+} from "@/components/ui/map";
 import type { RutaResponse, Nodo } from "../app/types";
 
-// Estilo OpenStreetMap via OpenFreeMap (tiles reales de calles)
-const OSM_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+// Carto Positron (claro y limpio como Google Maps)
+const STYLE_LIGHT = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+// Carto Dark Matter (oscuro elegante como el default de mapcn)
+const STYLE_DARK  = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+
 const AGS_CENTER: [number, number] = [-102.296, 21.879];
 
 interface Props {
@@ -13,160 +23,180 @@ interface Props {
   destinoPreview: Nodo | null;
 }
 
-export function RouteMap({ ruta, origenPreview, destinoPreview }: Props) {
-  const mapRef = useRef<MapRef>(null);
-  const markersRef = useRef<any[]>([]);
-  const [mapLoaded, setMapLoaded] = useState(false);
+// ── Dibuja la ruta con addSource/addLayer nativos de MapLibre ───
+function RutaLayer({ ruta }: { ruta: RutaResponse }) {
+  const { map, isLoaded } = useMap();
 
-  // ── Esperar a que el mapa esté listo ───────────────────────
   useEffect(() => {
-    const interval = setInterval(() => {
-      const m = mapRef.current?.getMap?.();
-      if (m && m.isStyleLoaded()) {
-        // Registrar fuentes vacías al inicio
-        if (!m.getSource("ruta")) {
-          m.addSource("ruta", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-          m.addLayer({
-            id: "ruta-halo",
-            type: "line",
-            source: "ruta",
-            paint: { "line-color": "#FF3B4E", "line-width": 14, "line-opacity": 0.15, "line-blur": 6 },
-            layout: { "line-cap": "round", "line-join": "round" },
-          });
-          m.addLayer({
-            id: "ruta-casing",
-            type: "line",
-            source: "ruta",
-            paint: { "line-color": "#ffffff", "line-width": 7, "line-opacity": 0.3 },
-            layout: { "line-cap": "round", "line-join": "round" },
-          });
-          m.addLayer({
-            id: "ruta-line",
-            type: "line",
-            source: "ruta",
-            paint: { "line-color": "#FF3B4E", "line-width": 5, "line-opacity": 1 },
-            layout: { "line-cap": "round", "line-join": "round" },
-          });
-          m.addSource("paradas", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-          m.addLayer({
-            id: "paradas-outer",
-            type: "circle",
-            source: "paradas",
-            paint: { "circle-radius": 5, "circle-color": "#ffffff", "circle-opacity": 0.9, "circle-stroke-color": "#FF3B4E", "circle-stroke-width": 2 },
-          });
-        }
-        setMapLoaded(true);
-        clearInterval(interval);
-      }
-    }, 200);
-    return () => clearInterval(interval);
-  }, []);
+    if (!map || !isLoaded) return;
 
-  // ── Helper: limpiar marcadores ─────────────────────────────
-  function clearMarkers() {
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current = [];
-  }
+    const coords: [number, number][] = ruta.geojson.geometry.coordinates
+      .filter(([ln, la]) => ln != null && la != null && isFinite(ln) && isFinite(la))
+      .map(([ln, la]) => [ln, la]);
 
-  function crearMarker(lng: number, lat: number, color: string, label: string, icon: string) {
-    const m = mapRef.current?.getMap?.();
-    if (!m) return;
+    if (coords.length < 2) return;
 
-    // Importar Marker desde maplibre-gl que ya viene como dep de @mapcn/map
-    const maplibre = require("maplibre-gl");
-    const el = document.createElement("div");
-    el.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:5px;";
-    el.innerHTML = `
-      <div style="
-        width:22px;height:22px;border-radius:50%;
-        background:${color};border:3px solid white;
-        box-shadow:0 2px 16px ${color}80;
-        display:flex;align-items:center;justify-content:center;
-        font-size:9px;color:white;font-weight:700;
-      ">${icon}</div>
-      <div style="
-        background:rgba(7,7,17,0.92);color:white;
-        font-size:10px;font-weight:600;font-family:'DM Sans',sans-serif;
-        padding:3px 9px;border-radius:8px;
-        border:1px solid rgba(255,255,255,0.13);
-        white-space:nowrap;max-width:130px;
-        overflow:hidden;text-overflow:ellipsis;
-        box-shadow:0 4px 16px rgba(0,0,0,0.5);
-      ">${label}</div>
-    `;
-    const marker = new maplibre.Marker({ element: el, anchor: "bottom" })
-      .setLngLat([lng, lat])
-      .addTo(m);
-    markersRef.current.push(marker);
-  }
-
-  // ── Preview markers ────────────────────────────────────────
-  useEffect(() => {
-    if (!mapLoaded || ruta) return;
-    clearMarkers();
-    const m = mapRef.current?.getMap?.();
-    if (!m) return;
-
-    // Limpiar ruta
-    (m.getSource("ruta") as any)?.setData({ type: "FeatureCollection", features: [] });
-    (m.getSource("paradas") as any)?.setData({ type: "FeatureCollection", features: [] });
-
-    if (origenPreview) {
-      crearMarker(origenPreview.lon, origenPreview.lat, "#22c55e", origenPreview.nombre, "A");
-      mapRef.current?.flyTo({ center: [origenPreview.lon, origenPreview.lat], zoom: 13, duration: 800 });
-    }
-    if (destinoPreview) {
-      crearMarker(destinoPreview.lon, destinoPreview.lat, "#FF3B4E", destinoPreview.nombre, "B");
-    }
-  }, [origenPreview, destinoPreview, mapLoaded, ruta]);
-
-  // ── Dibujar ruta real ──────────────────────────────────────
-  useEffect(() => {
-    if (!mapLoaded) return;
-    const m = mapRef.current?.getMap?.();
-    if (!m) return;
-
-    clearMarkers();
-
-    if (!ruta) {
-      (m.getSource("ruta") as any)?.setData({ type: "FeatureCollection", features: [] });
-      (m.getSource("paradas") as any)?.setData({ type: "FeatureCollection", features: [] });
-      return;
-    }
-
-    // Dibujar línea de ruta sobre las calles
-    (m.getSource("ruta") as any).setData(ruta.geojson);
-
-    // Puntos intermedios
-    const ptFeatures = ruta.paradas.slice(1, -1).map((p) => ({
-      type: "Feature" as const,
-      geometry: { type: "Point" as const, coordinates: [p.lon, p.lat] },
+    const geojson: GeoJSON.Feature = {
+      type: "Feature",
       properties: {},
-    }));
-    (m.getSource("paradas") as any).setData({ type: "FeatureCollection", features: ptFeatures });
+      geometry: { type: "LineString", coordinates: coords },
+    };
 
-    // Marcadores inicio / fin
-    crearMarker(ruta.origen.lon, ruta.origen.lat, "#22c55e", ruta.origen.nombre, "A");
-    crearMarker(ruta.destino.lon, ruta.destino.lat, "#FF3B4E", ruta.destino.nombre, "B");
+    const cleanup = () => {
+      try {
+        if (map.getLayer("ags-dots"))   map.removeLayer("ags-dots");
+        if (map.getLayer("ags-line"))   map.removeLayer("ags-line");
+        if (map.getLayer("ags-casing")) map.removeLayer("ags-casing");
+        if (map.getLayer("ags-halo"))   map.removeLayer("ags-halo");
+        if (map.getSource("ags-ruta"))  map.removeSource("ags-ruta");
+        if (map.getSource("ags-pts"))   map.removeSource("ags-pts");
+      } catch (_) {}
+    };
 
-    // Auto-zoom para encuadrar toda la ruta
-    const coords = ruta.geojson.geometry.coordinates;
+    cleanup(); // Limpiar si ya existían de antes
+
+    try {
+      // ── Fuente principal de la ruta ──
+      map.addSource("ags-ruta", { type: "geojson", data: geojson });
+
+      // Halo exterior difuminado
+      map.addLayer({
+        id: "ags-halo",
+        type: "line",
+        source: "ags-ruta",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#4285F4", "line-width": 18, "line-opacity": 0.12, "line-blur": 4 },
+      });
+      // Borde blanco (casing) — igual que Google Maps
+      map.addLayer({
+        id: "ags-casing",
+        type: "line",
+        source: "ags-ruta",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#ffffff", "line-width": 8, "line-opacity": 0.9 },
+      });
+      // Línea azul principal (igual que Google Maps)
+      map.addLayer({
+        id: "ags-line",
+        type: "line",
+        source: "ags-ruta",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#4285F4", "line-width": 5.5, "line-opacity": 1 },
+      });
+
+      // ── Puntos intermedios ──
+      const ptFeatures: GeoJSON.Feature[] = ruta.paradas.slice(1, -1).map((p) => ({
+        type: "Feature",
+        properties: {},
+        geometry: { type: "Point", coordinates: [p.lon, p.lat] },
+      }));
+      map.addSource("ags-pts", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: ptFeatures },
+      });
+      map.addLayer({
+        id: "ags-dots",
+        type: "circle",
+        source: "ags-pts",
+        paint: {
+          "circle-radius": 4,
+          "circle-color": "#4285F4",
+          "circle-stroke-color": "#ffffff",
+          "circle-stroke-width": 2,
+          "circle-opacity": 0.8,
+        },
+      });
+    } catch (e) {
+      console.warn("Error dibujando ruta:", e);
+    }
+
+    // Fit bounds con padding generoso
     const lngs = coords.map((c) => c[0]);
     const lats = coords.map((c) => c[1]);
-    m.fitBounds(
+    map.fitBounds(
       [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-      { padding: { top: 80, bottom: 80, left: 80, right: 80 }, duration: 1000, maxZoom: 14 }
+      { padding: { top: 100, bottom: 100, left: 60, right: 60 }, duration: 1100, maxZoom: 14 }
     );
-  }, [ruta, mapLoaded]);
+
+    return cleanup;
+  }, [map, isLoaded, ruta]);
+
+  return null;
+}
+
+// ── Fly-to cuando se selecciona origen en preview ───────────────
+function FlyToPreview({ nodo }: { nodo: Nodo }) {
+  const { map, isLoaded } = useMap();
+  useEffect(() => {
+    if (!map || !isLoaded) return;
+    map.flyTo({ center: [nodo.lon, nodo.lat], zoom: 13, duration: 900 });
+  }, [map, isLoaded, nodo]);
+  return null;
+}
+
+// ── Pin A / B ───────────────────────────────────────────────────
+function Pin({ nodo, label, bg, glow }: { nodo: Nodo; label: string; bg: string; glow: string }) {
+  return (
+    <MapMarker longitude={nodo.lon} latitude={nodo.lat} anchor="bottom">
+      <MarkerContent>
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:5, filter:`drop-shadow(0 4px 12px ${glow})` }}>
+          {/* Círculo del pin */}
+          <div style={{
+            width:30, height:30, borderRadius:"50%",
+            background:bg, border:"3px solid white",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            color:"white", fontWeight:800, fontSize:12,
+            fontFamily:"'DM Sans','Inter',sans-serif",
+            letterSpacing:"-0.5px",
+          }}>{label}</div>
+          {/* Etiqueta nombre */}
+          <div style={{
+            background:"rgba(255,255,255,0.97)",
+            color:"#111",
+            fontSize:10, fontWeight:700,
+            fontFamily:"'DM Sans','Inter',sans-serif",
+            padding:"3px 9px", borderRadius:8,
+            border:"1px solid rgba(0,0,0,0.1)",
+            whiteSpace:"nowrap", maxWidth:150,
+            overflow:"hidden", textOverflow:"ellipsis",
+            boxShadow:"0 2px 12px rgba(0,0,0,0.18)",
+          }}>{nodo.nombre}</div>
+        </div>
+      </MarkerContent>
+    </MapMarker>
+  );
+}
+
+// ── Componente principal ────────────────────────────────────────
+export function RouteMap({ ruta, origenPreview, destinoPreview }: Props) {
+  const mapRef = useRef<MapRef>(null);
+  const origenNodo  = ruta?.origen  ?? origenPreview;
+  const destinoNodo = ruta?.destino ?? destinoPreview;
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+    <div style={{ width:"100%", height:"100%" }}>
       <Map
         ref={mapRef}
         center={AGS_CENTER}
         zoom={11}
-        styles={{ light: OSM_STYLE, dark: OSM_STYLE }}
-      />
+        // Sin pasar `styles` → usa el default Carto de mapcn (igual que la doc)
+        // Si quieres el look claro tipo Google Maps descomenta la siguiente línea:
+        // styles={{ light: STYLE_LIGHT, dark: STYLE_DARK }}
+        className="w-full h-full"
+      >
+        {ruta && <RutaLayer ruta={ruta} />}
+
+        {!ruta && origenPreview && <FlyToPreview nodo={origenPreview} />}
+
+        {origenNodo && (
+          <Pin nodo={origenNodo}  label="A" bg="#22c55e" glow="rgba(34,197,94,0.5)"  />
+        )}
+        {destinoNodo && (
+          <Pin nodo={destinoNodo} label="B" bg="#FF3B4E" glow="rgba(255,59,78,0.5)" />
+        )}
+
+        <MapControls position="bottom-right" showZoom showCompass />
+      </Map>
     </div>
   );
 }
