@@ -1,3 +1,5 @@
+# pop -> quita
+
 class Queue:
     def __init__(self):
         self.cola = []
@@ -8,6 +10,7 @@ class Queue:
     def dequeue(self):
         self.cola.pop(0)
 
+    # muestra el ultimo valor no elimina la lista
     def peek(self):
         print(self.cola[0])
 
