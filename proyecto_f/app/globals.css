@@ -1,0 +1,45 @@
+/* 1. PRIMERO TODOS LOS IMPORTS */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+@import "maplibre-gl/dist/maplibre-gl.css";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* 2. LUEGO TAILWIND (Si usas v4, @import "tailwindcss" es mejor, si no, deja estos) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 3. VARIABLES Y CONFIGURACIÓN */
+@custom-variant dark (&:is(.dark *));
+
+:root { 
+  --radius: 0.625rem; 
+  /* ... tus variables oklch aquí ... */
+}
+
+/* 4. REGLAS GLOBALES */
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+html, body {
+  height: 100%;
+  background: #070711;
+  color: white;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 5. RESTO DE TUS ESTILOS (Scrollbars, MapLibre overrides, etc.) */
+input, button { font-family: inherit; }
+input::placeholder { color: rgba(255,255,255,0.22); }
+
+::-webkit-scrollbar { width: 4px; }
+/* ... el resto de tu código ... */
+
+.maplibregl-ctrl-group {
+  background: rgba(11,11,24,0.92) !important;
+  /* ... etc ... */
+}
